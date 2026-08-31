@@ -18,7 +18,7 @@ describe("streamAssistant", () => {
   it("posts the browser-memory conversation and parses split SSE frames", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       sseResponse([
-        'event: token\ndata: {"text":"Start"}\n',
+        'event: delta\ndata: {"text":"Start"}\n',
         '\nevent: token\ndata: {"text":" here"}\n\n',
         'event: sources\ndata: {"sources":[{"title":"Handbook","url":"/handouts/guide.pdf"}]}\n\n',
         "event: done\ndata: {}\n\n",

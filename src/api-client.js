@@ -9,7 +9,9 @@ function parseEvent(frame) {
   if (dataLines.length === 0) return null;
 
   const payload = JSON.parse(dataLines.join("\n"));
-  if (eventType === "token") return { type: "token", text: payload.text ?? "" };
+  if (eventType === "token" || eventType === "delta") {
+    return { type: "token", text: payload.text ?? "" };
+  }
   if (eventType === "sources") {
     return { type: "sources", sources: payload.sources ?? [] };
   }
