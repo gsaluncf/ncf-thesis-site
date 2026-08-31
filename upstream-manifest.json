@@ -1,0 +1,134 @@
+{
+  "repository": "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboard",
+  "commit": "68b6fc6b0992f35ed16add1b526dd218d3e43fa4",
+  "importedAt": "2026-08-31T17:27:18.628Z",
+  "importedPaths": [
+    "assets/index-CXSl9HMH.css",
+    "assets/index-EREuTEJm.js",
+    "handouts/My-Research-Plan.docx",
+    "handouts/Planning-My-Plan.docx",
+    "handouts/Proposal-Worksheet (1).docx",
+    "handouts/Proposal-Worksheet.docx",
+    "handouts/Research-Question-Templates.docx",
+    "handouts/Senior Thesis Sample Title Page and Abstract.docx",
+    "handouts/Thesis-of-My-Thesis.docx",
+    "handouts/Transforming-Weak-Verbs-to-Strong.docx",
+    "images/hero-bg.jpg",
+    "images/mascot-wordmark.png",
+    "images/mighty-banyans.jpeg",
+    "images/ncf-logo-horiz.png",
+    "images/ncf-logo-stack-rev.jpg",
+    "images/ncf-logo-stack-rev2.jpg",
+    "images/ncf-shield.png",
+    "images/texture-checklist.jpg",
+    "images/texture-graduation.jpg",
+    "images/texture-library.jpg",
+    "images/texture-research.jpg",
+    "images/texture-timeline.jpg",
+    "images/texture-writing.jpg",
+    "index.html",
+    "vite.svg"
+  ],
+  "files": [
+    {
+      "path": "assets/index-CXSl9HMH.css",
+      "sha256": "0c4593ed9f585dd63373cf7f64c620a6768da22f951128e5a0d003b2c3fce21f"
+    },
+    {
+      "path": "assets/index-EREuTEJm.js",
+      "sha256": "eb51830ef76ae5d2473511681e55e115bb8eee335e00320ee8cd672c7293f11c"
+    },
+    {
+      "path": "handouts/My-Research-Plan.docx",
+      "sha256": "eac7749dc069f895fa7d928f5b3ee8da92831d43b61448a78ac7d366ba0d45b9"
+    },
+    {
+      "path": "handouts/Planning-My-Plan.docx",
+      "sha256": "f9b07d1f0f58c9be52fbd01ea3ddcb85096914af836a115f2dc2cea71b1ac2c1"
+    },
+    {
+      "path": "handouts/Proposal-Worksheet (1).docx",
+      "sha256": "1cb32dc58d895c2307b4dd2f4d3bf00ffe6a2b47b05d96f667a5662502ae25d9"
+    },
+    {
+      "path": "handouts/Proposal-Worksheet.docx",
+      "sha256": "1cb32dc58d895c2307b4dd2f4d3bf00ffe6a2b47b05d96f667a5662502ae25d9"
+    },
+    {
+      "path": "handouts/Research-Question-Templates.docx",
+      "sha256": "ed9395c110711bfb38cd19ea0502df710d964756ab685f43b6251edbd92d8957"
+    },
+    {
+      "path": "handouts/Senior Thesis Sample Title Page and Abstract.docx",
+      "sha256": "d2805fe81b10346de427cbb6ace11d7041f51d9dd02578be78479b2be7584afe"
+    },
+    {
+      "path": "handouts/Thesis-of-My-Thesis.docx",
+      "sha256": "d661aef24faa5fa6cd3f1a87858cb7afb6f39c66a0c69764d69556ac6acff56e"
+    },
+    {
+      "path": "handouts/Transforming-Weak-Verbs-to-Strong.docx",
+      "sha256": "845609c5d7e8cb5c44775122ee6cddbcdde76d2b03ec7c68a4f721dfaba11b0a"
+    },
+    {
+      "path": "images/hero-bg.jpg",
+      "sha256": "a99d155c2909938326a5cff3cfab12b1e230708bfd18fdfb1418a95607e37e55"
+    },
+    {
+      "path": "images/mascot-wordmark.png",
+      "sha256": "bb70fb2fcd05ab3d2142d24e586bfb66c8f850cb7a679f2c800bd14ccd2f0def"
+    },
+    {
+      "path": "images/mighty-banyans.jpeg",
+      "sha256": "ea8561d550d717a7c312b876b0b0ea39e576c9b04bc86d997e9e883a662b9375"
+    },
+    {
+      "path": "images/ncf-logo-horiz.png",
+      "sha256": "eb8173eb12c2926028f5e2cf5321c1f65af0e803b176ec77e297da57c759b340"
+    },
+    {
+      "path": "images/ncf-logo-stack-rev.jpg",
+      "sha256": "b74d957cc9c18a39c24fd0a7f7a9bbb70ae653302e8c7d3572810cd445d007f1"
+    },
+    {
+      "path": "images/ncf-logo-stack-rev2.jpg",
+      "sha256": "55b3e4b337924517f834ac032414d1c68e4a3d893ffa4be6ff03f118a3e7a482"
+    },
+    {
+      "path": "images/ncf-shield.png",
+      "sha256": "bdc4feeb10fe731841964447dff97609664ea750b122ce9b341ad89bf33fe698"
+    },
+    {
+      "path": "images/texture-checklist.jpg",
+      "sha256": "658a46455e02077c3e386238fda4b6921ed37b59318711d1c347c27bfe5fd713"
+    },
+    {
+      "path": "images/texture-graduation.jpg",
+      "sha256": "0a9304eb80f1fad9541579131ef281332aebc54ab5ecd24f1efd11a46dc1ba64"
+    },
+    {
+      "path": "images/texture-library.jpg",
+      "sha256": "60b5fcafcf4302282364f8011bea33264ad1bf93cd5ac95e23c8a8282b35c7d9"
+    },
+    {
+      "path": "images/texture-research.jpg",
+      "sha256": "7e9045dfc5413a8b6cb02a73701339743524c3f42e8507800ab22f55c43347b8"
+    },
+    {
+      "path": "images/texture-timeline.jpg",
+      "sha256": "90bfc9453a7791116548a5faf37df3eeb165be5b9fa7a14ab81374b083f10d8a"
+    },
+    {
+      "path": "images/texture-writing.jpg",
+      "sha256": "003e5d24d33d91158253895463876514c03431983d33c2c93d4a5c7270f1675a"
+    },
+    {
+      "path": "index.html",
+      "sha256": "013b6e1a9967f19822072e6aac071c89b635f2a66cdd1637248a9c77b54336ba"
+    },
+    {
+      "path": "vite.svg",
+      "sha256": "4a748afd443918bb16591c834c401dae33e87861ab5dbad0811c3a3b4a9214fb"
+    }
+  ]
+}

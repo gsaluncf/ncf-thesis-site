@@ -1,0 +1,20 @@
+{
+  "name": "ncf-thesis-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "import:upstream": "node scripts/import-upstream.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.62.1",
+    "jsdom": "30.0.1",
+    "linkinator": "8.1.0",
+    "lucide-static": "1.38.0",
+    "vitest": "4.1.11"
+  }
+}
