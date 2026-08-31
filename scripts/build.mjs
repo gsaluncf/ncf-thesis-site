@@ -16,6 +16,7 @@ for (const path of copiedRoots) {
 await cp(join(projectRoot, "vite.svg"), join(outputRoot, "vite.svg"));
 await cp(join(projectRoot, "src", "site.css"), join(enhancementRoot, "site.css"));
 await cp(join(projectRoot, "src", "enhance.js"), join(enhancementRoot, "enhance.js"));
+await cp(join(projectRoot, "src", "api-client.js"), join(enhancementRoot, "api-client.js"));
 await cp(
   join(projectRoot, "src", "rooty-assistant.js"),
   join(enhancementRoot, "rooty-assistant.js"),
