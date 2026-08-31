@@ -21,6 +21,9 @@ describe("the Cloudflare Pages artifact", () => {
     expect((await stat(new URL("../dist/handouts", import.meta.url))).isDirectory()).toBe(
       true,
     );
+    expect(
+      (await stat(new URL("../dist/enhancements/icons/house.svg", import.meta.url))).isFile(),
+    ).toBe(true);
   });
 
   it("ships a useful custom 404 page", async () => {
