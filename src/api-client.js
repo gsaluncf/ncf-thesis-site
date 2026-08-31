@@ -35,16 +35,22 @@ export async function* streamAssistant(
   messages,
   { fetchImpl = globalThis.fetch, signal } = {},
 ) {
-  const response = await fetchImpl("/api/chat", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      Accept: "text/event-stream",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ messages }),
-    signal,
-  });
+  let response;
+  try {
+    response = await fetchImpl("/api/chat", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "text/event-stream",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ messages }),
+      signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") throw error;
+    throw new Error("The connection to the thesis assistant failed. Please try again.");
+  }
   const contentType = response.headers.get("content-type") || "";
 
   if (contentType.includes("text/html")) {
@@ -59,17 +65,25 @@ export async function* streamAssistant(
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
-    const { value, done } = await reader.read();
-    buffer += decoder.decode(value, { stream: !done });
-    const frames = buffer.split(/\r?\n\r?\n/);
-    buffer = frames.pop() ?? "";
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const frames = buffer.split(/\r?\n\r?\n/);
+      buffer = frames.pop() ?? "";
 
-    for (const frame of frames) {
-      const event = parseEvent(frame);
-      if (event) yield event;
+      for (const frame of frames) {
+        const event = parseEvent(frame);
+        if (event) yield event;
+      }
+      if (done) break;
     }
-    if (done) break;
+  } catch (error) {
+    if (error?.name === "AbortError") throw error;
+    if (error instanceof TypeError) {
+      throw new Error("The connection to the thesis assistant failed. Please try again.");
+    }
+    throw error;
   }
 
   if (buffer.trim()) {

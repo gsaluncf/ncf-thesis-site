@@ -38,6 +38,8 @@ test("the hero action opens Rooty and a streamed answer stays in the page", asyn
       status: 200,
       contentType: "text/event-stream",
       body: [
+        'event: intent\ndata: {"kind":"question","text":"I have your question."}\n\n',
+        'event: progress\ndata: {"stage":"retrieval","text":"Searching the NCF thesis materials."}\n\n',
         'event: token\ndata: {"text":"Start with your working question."}\n\n',
         'event: sources\ndata: {"sources":[{"title":"NCF Thesis Guide","url":"https://www.ncf.edu/academics/senior-thesis-project/"}]}\n\n',
         "event: done\ndata: {}\n\n",

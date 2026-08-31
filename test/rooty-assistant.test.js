@@ -70,6 +70,49 @@ describe("RootyAssistant", () => {
     storageSpy.mockRestore();
   });
 
+  it("shows progressive status immediately without adding it to conversation history", async () => {
+    const element = mount();
+    let releaseAnswer;
+    const waitForAnswer = new Promise((resolve) => {
+      releaseAnswer = resolve;
+    });
+    element.assistantStream = vi.fn(async function* () {
+      yield {
+        type: "intent",
+        kind: "question",
+        text: "I have your question. I am checking the NCF thesis materials now.",
+      };
+      yield {
+        type: "progress",
+        stage: "retrieval",
+        text: "Searching the NCF thesis materials.",
+      };
+      await waitForAnswer;
+      yield { type: "token", text: "Your grounded answer." };
+      yield { type: "done" };
+    });
+
+    element.open();
+    const root = element.shadowRoot;
+    root.querySelector("textarea").value = "What should I do first?";
+    root.querySelector("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+
+    await vi.waitFor(() => {
+      expect(root.textContent).toContain("Searching the NCF thesis materials.");
+    });
+    expect(element.messages).toEqual([
+      { role: "user", content: "What should I do first?" },
+    ]);
+
+    releaseAnswer();
+    await vi.waitFor(() => {
+      expect(root.textContent).toContain("Your grounded answer.");
+    });
+    expect(root.textContent).not.toContain("Searching the NCF thesis materials.");
+  });
+
   it("clears browser-memory messages without reloading the page", async () => {
     const element = mount();
     element.open();

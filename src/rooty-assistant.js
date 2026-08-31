@@ -73,6 +73,7 @@ export class RootyAssistant extends HTMLElement {
     this.isBusy = false;
     this.messages = [];
     this.sources = [];
+    this.statusText = "";
     this.assistantStream = streamAssistant;
     this.abortController = null;
     this.previousFocus = null;
@@ -107,6 +108,7 @@ export class RootyAssistant extends HTMLElement {
     this.isBusy = false;
     this.messages = [];
     this.sources = [];
+    this.statusText = "";
     this.render();
     queueMicrotask(() => this.shadowRoot.querySelector("textarea")?.focus());
   }
@@ -171,10 +173,11 @@ export class RootyAssistant extends HTMLElement {
       }
     });
 
-    if (this.isBusy && this.messages.at(-1)?.role !== "assistant") {
+    if (this.isBusy && this.statusText) {
       const status = document.createElement("p");
       status.className = "thinking";
-      status.textContent = "Rooty is checking the NCF thesis materials.";
+      status.setAttribute("role", "status");
+      status.textContent = this.statusText;
       container.append(status);
     }
     container.scrollTop = container.scrollHeight;
@@ -229,6 +232,7 @@ export class RootyAssistant extends HTMLElement {
     this.messages.push({ role: "user", content: question });
     this.sources = [];
     this.isBusy = true;
+    this.statusText = "Sending your question securely.";
     this.abortController = new AbortController();
     this.render();
 
@@ -237,7 +241,12 @@ export class RootyAssistant extends HTMLElement {
       for await (const eventData of this.assistantStream(this.messages.slice(-12), {
         signal: this.abortController.signal,
       })) {
+        if (eventData.type === "intent" || eventData.type === "progress") {
+          this.statusText = eventData.text;
+          this.renderMessages();
+        }
         if (eventData.type === "token") {
+          this.statusText = "";
           answer += eventData.text;
           const lastMessage = this.messages.at(-1);
           if (lastMessage?.role === "assistant") lastMessage.content = answer;
@@ -256,11 +265,13 @@ export class RootyAssistant extends HTMLElement {
         });
       }
     } catch (error) {
+      this.statusText = "";
       if (error.name !== "AbortError") {
         this.messages.push({ role: "assistant", content: error.message });
       }
     } finally {
       this.isBusy = false;
+      this.statusText = "";
       this.abortController = null;
       this.render();
       queueMicrotask(() => this.shadowRoot.querySelector("textarea")?.focus());

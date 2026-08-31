@@ -18,6 +18,8 @@ describe("streamAssistant", () => {
   it("posts the browser-memory conversation and parses split SSE frames", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       sseResponse([
+        'event: intent\ndata: {"kind":"question","text":"I have your question."}\n\n',
+        'event: progress\ndata: {"stage":"retrieval","text":"Searching the NCF thesis materials."}\n\n',
         'event: delta\ndata: {"text":"Start"}\n',
         '\nevent: token\ndata: {"text":" here"}\n\n',
         'event: sources\ndata: {"sources":[{"title":"Handbook","url":"/handouts/guide.pdf"}]}\n\n',
@@ -32,6 +34,12 @@ describe("streamAssistant", () => {
     }
 
     expect(events).toEqual([
+      { type: "intent", kind: "question", text: "I have your question." },
+      {
+        type: "progress",
+        stage: "retrieval",
+        text: "Searching the NCF thesis materials.",
+      },
       { type: "token", text: "Start" },
       { type: "token", text: " here" },
       {
@@ -84,5 +92,17 @@ describe("streamAssistant", () => {
       }
     }).rejects.toThrow("Too many requests");
     expect(fetchImpl.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  it("turns an opaque browser transport failure into a useful retry message", async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new TypeError("Load failed"));
+
+    await expect(async () => {
+      for await (const _event of streamAssistant([], { fetchImpl })) {
+        // Consume the stream.
+      }
+    }).rejects.toThrow(
+      "The connection to the thesis assistant failed. Please try again.",
+    );
   });
 });
