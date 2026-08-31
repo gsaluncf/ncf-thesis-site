@@ -26,6 +26,15 @@ describe("the Cloudflare Pages artifact", () => {
     ).toBe(true);
   });
 
+  it("ships Manu's dashboard without instantiating its canned Rooty component", async () => {
+    const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
+    const entryPath = html.match(/src="\.\/(assets\/[^"]+\.js)"/)?.[1];
+    expect(entryPath).toBeTruthy();
+
+    const entry = await readFile(new URL(`../dist/${entryPath}`, import.meta.url), "utf8");
+    expect(entry).not.toContain(",i.jsx(sf,{})");
+  });
+
   it("ships a useful custom 404 page", async () => {
     const html = await readFile(new URL("../dist/404.html", import.meta.url), "utf8");
 

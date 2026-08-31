@@ -60,14 +60,66 @@ describe("RootyAssistant", () => {
     const source = root.querySelector('.sources a[href="https://www.ncf.edu/thesis"]');
     expect(source.textContent).toContain("NCF Thesis Guide");
     expect(storageSpy).not.toHaveBeenCalled();
-    expect(element.messages).toEqual([
+    expect(element.messages.map(({ role, content }) => ({ role, content }))).toEqual([
       { role: "user", content: "How do I choose a topic?" },
-      {
-        role: "assistant",
-        content: "Start with a question you genuinely want to answer.",
-      },
+      { role: "assistant", content: "Start with a question you genuinely want to answer." },
     ]);
     storageSpy.mockRestore();
+  });
+
+  it("renders assistant Markdown as sanitized HTML", async () => {
+    const element = mount();
+    element.assistantStream = vi.fn(async function* () {
+      yield {
+        type: "token",
+        text: "**Start here.**\n\n- Read the guide\n- Ask your sponsor\n\n[Unsafe](javascript:alert(1))",
+      };
+      yield { type: "done" };
+    });
+
+    element.open();
+    const root = element.shadowRoot;
+    root.querySelector("textarea").value = "What should I do?";
+    root.querySelector("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+
+    await vi.waitFor(() => expect(root.querySelector(".assistant .bubble strong")).not.toBeNull());
+    expect(root.querySelectorAll(".assistant .bubble li")).toHaveLength(2);
+    expect(root.querySelector('.assistant .bubble a[href^="javascript:"]')).toBeNull();
+  });
+
+  it("shows an immediate status bubble and timestamps every chat bubble", async () => {
+    const element = mount();
+    let release;
+    const waiting = new Promise((resolve) => {
+      release = resolve;
+    });
+    element.assistantStream = vi.fn(async function* () {
+      await waiting;
+      yield { type: "intent", kind: "question", text: "I have your question." };
+      yield { type: "token", text: "The answer." };
+      yield { type: "done" };
+    });
+
+    element.open();
+    const root = element.shadowRoot;
+    root.querySelector("textarea").value = "How do I start?";
+    root.querySelector("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+
+    expect(root.querySelector(".message.assistant.status .bubble").textContent).toContain(
+      "Question received",
+    );
+    expect(root.querySelector(".message.assistant.status .message-meta").textContent).toContain(
+      "+0 ms",
+    );
+    expect(root.querySelector(".message.user .message-meta")).not.toBeNull();
+
+    release();
+    await vi.waitFor(() => expect(root.textContent).toContain("The answer."));
+    expect(root.querySelector(".message.assistant:not(.status) .message-meta")).not.toBeNull();
   });
 
   it("shows progressive status immediately without adding it to conversation history", async () => {
@@ -102,7 +154,7 @@ describe("RootyAssistant", () => {
     await vi.waitFor(() => {
       expect(root.textContent).toContain("Searching the NCF thesis materials.");
     });
-    expect(element.messages).toEqual([
+    expect(element.messages.map(({ role, content }) => ({ role, content }))).toEqual([
       { role: "user", content: "What should I do first?" },
     ]);
 

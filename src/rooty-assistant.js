@@ -1,4 +1,5 @@
 import { streamAssistant } from "./api-client.js";
+import { renderMarkdown } from "./markdown-renderer.js";
 
 const icons = {
   close: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>`,
@@ -27,11 +28,23 @@ const styles = `
   .icon-button:hover { background:rgb(255 255 255 / 13%); }
   .messages { overflow:auto; padding:1rem; background:linear-gradient(180deg,#f7f5ef 0,#fff 8rem); scroll-behavior:smooth; }
   .welcome { margin:0 0 1rem; padding:.85rem 1rem; border-left:.22rem solid var(--gold); background:#fff; color:#384152; font-size:.82rem; line-height:1.5; box-shadow:0 .25rem 1rem rgb(32 41 68 / 7%); }
-  .message { display:flex; margin:.7rem 0; }
+  .message { display:flex; flex-direction:column; align-items:flex-start; margin:.7rem 0; }
   .message.user { justify-content:flex-end; }
-  .bubble { max-width:87%; padding:.7rem .85rem; border-radius:1rem; white-space:pre-wrap; overflow-wrap:anywhere; font-size:.86rem; line-height:1.52; }
+  .message.user { align-items:flex-end; }
+  .bubble { max-width:87%; padding:.7rem .85rem; border-radius:1rem; overflow-wrap:anywhere; font-size:.86rem; line-height:1.52; }
   .assistant .bubble { border-bottom-left-radius:.25rem; background:#e9eaed; color:#202944; }
-  .user .bubble { border-bottom-right-radius:.25rem; background:var(--navy); color:#fff; }
+  .user .bubble { border-bottom-right-radius:.25rem; background:var(--navy); color:#fff; white-space:pre-wrap; }
+  .assistant.status .bubble { border:1px solid rgb(32 41 68 / 12%); background:#fff; color:#4b5563; font-style:italic; }
+  .message-meta { margin:.22rem .35rem 0; color:#747b88; font-size:.62rem; font-variant-numeric:tabular-nums; letter-spacing:.01em; }
+  .bubble > :first-child { margin-top:0; }
+  .bubble > :last-child { margin-bottom:0; }
+  .bubble p { margin:.45rem 0; }
+  .bubble ul, .bubble ol { margin:.45rem 0; padding-left:1.3rem; }
+  .bubble li + li { margin-top:.2rem; }
+  .bubble a { color:#17213d; font-weight:700; text-decoration-thickness:.08em; text-underline-offset:.14em; }
+  .bubble code { padding:.08rem .25rem; border-radius:.2rem; background:rgb(32 41 68 / 9%); font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.8em; }
+  .bubble pre { max-width:100%; overflow:auto; padding:.6rem; border-radius:.35rem; background:#202944; color:#fff; }
+  .bubble pre code { padding:0; background:transparent; color:inherit; }
   .sources { margin:.5rem 0 0; padding:.65rem .75rem; border:1px solid rgb(32 41 68 / 14%); border-radius:.45rem; background:#fff; font-size:.74rem; }
   .sources strong { display:block; margin-bottom:.3rem; color:#5c6473; letter-spacing:.05em; text-transform:uppercase; }
   .sources a { display:block; color:var(--navy); font-weight:700; line-height:1.4; }
@@ -74,7 +87,10 @@ export class RootyAssistant extends HTMLElement {
     this.messages = [];
     this.sources = [];
     this.statusText = "";
+    this.statusTiming = null;
     this.assistantStream = streamAssistant;
+    this.wallNow = () => new Date();
+    this.elapsedNow = () => globalThis.performance.now();
     this.abortController = null;
     this.previousFocus = null;
     this.shadowRoot.addEventListener("click", (event) => this.onClick(event));
@@ -109,6 +125,7 @@ export class RootyAssistant extends HTMLElement {
     this.messages = [];
     this.sources = [];
     this.statusText = "";
+    this.statusTiming = null;
     this.render();
     queueMicrotask(() => this.shadowRoot.querySelector("textarea")?.focus());
   }
@@ -164,8 +181,19 @@ export class RootyAssistant extends HTMLElement {
       row.className = `message ${message.role === "user" ? "user" : "assistant"}`;
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.textContent = message.content;
+      if (message.role === "assistant") {
+        bubble.innerHTML = renderMarkdown(message.content);
+        for (const link of bubble.querySelectorAll("a[href]")) {
+          if (link.origin !== globalThis.location?.origin) {
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+          }
+        }
+      } else {
+        bubble.textContent = message.content;
+      }
       row.append(bubble);
+      row.append(this.renderTiming(message));
       container.append(row);
 
       if (message.role === "assistant" && index === this.messages.length - 1) {
@@ -174,13 +202,36 @@ export class RootyAssistant extends HTMLElement {
     });
 
     if (this.isBusy && this.statusText) {
-      const status = document.createElement("p");
-      status.className = "thinking";
-      status.setAttribute("role", "status");
-      status.textContent = this.statusText;
-      container.append(status);
+      const row = document.createElement("div");
+      row.className = "message assistant status";
+      row.setAttribute("role", "status");
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = this.statusText;
+      row.append(bubble, this.renderTiming(this.statusTiming));
+      container.append(row);
     }
     container.scrollTop = container.scrollHeight;
+  }
+
+  captureTiming(requestStartedAt) {
+    return {
+      timestamp: this.wallNow().toISOString(),
+      elapsedMs: Math.max(0, Math.round(this.elapsedNow() - requestStartedAt)),
+    };
+  }
+
+  renderTiming(timing) {
+    const meta = document.createElement("span");
+    meta.className = "message-meta";
+    if (!timing?.timestamp) return meta;
+    const clock = new Intl.DateTimeFormat([], {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    }).format(new Date(timing.timestamp));
+    meta.textContent = `${clock} · +${timing.elapsedMs ?? 0} ms`;
+    return meta;
   }
 
   renderSources(container) {
@@ -229,20 +280,30 @@ export class RootyAssistant extends HTMLElement {
     const question = input.value.trim();
     if (!question) return;
 
-    this.messages.push({ role: "user", content: question });
+    const requestStartedAt = this.elapsedNow();
+    this.messages.push({
+      role: "user",
+      content: question,
+      ...this.captureTiming(requestStartedAt),
+    });
     this.sources = [];
     this.isBusy = true;
-    this.statusText = "Sending your question securely.";
+    this.statusText = "Question received. Sending it securely.";
+    this.statusTiming = this.captureTiming(requestStartedAt);
     this.abortController = new AbortController();
     this.render();
 
     let answer = "";
     try {
-      for await (const eventData of this.assistantStream(this.messages.slice(-12), {
+      const requestMessages = this.messages
+        .slice(-12)
+        .map(({ role, content }) => ({ role, content }));
+      for await (const eventData of this.assistantStream(requestMessages, {
         signal: this.abortController.signal,
       })) {
         if (eventData.type === "intent" || eventData.type === "progress") {
           this.statusText = eventData.text;
+          this.statusTiming = this.captureTiming(requestStartedAt);
           this.renderMessages();
         }
         if (eventData.type === "token") {
@@ -250,7 +311,13 @@ export class RootyAssistant extends HTMLElement {
           answer += eventData.text;
           const lastMessage = this.messages.at(-1);
           if (lastMessage?.role === "assistant") lastMessage.content = answer;
-          else this.messages.push({ role: "assistant", content: answer });
+          else {
+            this.messages.push({
+              role: "assistant",
+              content: answer,
+              ...this.captureTiming(requestStartedAt),
+            });
+          }
           this.renderMessages();
         }
         if (eventData.type === "sources") {
@@ -262,16 +329,22 @@ export class RootyAssistant extends HTMLElement {
         this.messages.push({
           role: "assistant",
           content: "I could not find a supported answer. Try asking about one specific part of the NCF thesis process.",
+          ...this.captureTiming(requestStartedAt),
         });
       }
     } catch (error) {
       this.statusText = "";
       if (error.name !== "AbortError") {
-        this.messages.push({ role: "assistant", content: error.message });
+        this.messages.push({
+          role: "assistant",
+          content: error.message,
+          ...this.captureTiming(requestStartedAt),
+        });
       }
     } finally {
       this.isBusy = false;
       this.statusText = "";
+      this.statusTiming = null;
       this.abortController = null;
       this.render();
       queueMicrotask(() => this.shadowRoot.querySelector("textarea")?.focus());

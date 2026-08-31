@@ -34,13 +34,14 @@ test("the hero action opens Rooty and a streamed answer stays in the page", asyn
   page,
 }) => {
   await page.route("**/api/chat", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
     await route.fulfill({
       status: 200,
       contentType: "text/event-stream",
       body: [
         'event: intent\ndata: {"kind":"question","text":"I have your question."}\n\n',
         'event: progress\ndata: {"stage":"retrieval","text":"Searching the NCF thesis materials."}\n\n',
-        'event: token\ndata: {"text":"Start with your working question."}\n\n',
+        'event: token\ndata: {"text":"**Start** with your working question.\\n\\n- Write it down\\n- Ask your sponsor"}\n\n',
         'event: sources\ndata: {"sources":[{"title":"NCF Thesis Guide","url":"https://www.ncf.edu/academics/senior-thesis-project/"}]}\n\n',
         "event: done\ndata: {}\n\n",
       ].join(""),
@@ -53,7 +54,13 @@ test("the hero action opens Rooty and a streamed answer stays in the page", asyn
   await assistant.locator("textarea").fill("How should I begin?");
   await assistant.locator('button[aria-label="Send message"]').click();
 
-  await expect(assistant).toContainText("Start with your working question.");
+  await expect(assistant.locator(".message.assistant.status .bubble")).toContainText(
+    "Question received",
+  );
+  await expect(assistant.locator(".message.assistant .bubble strong")).toHaveText("Start");
+  await expect(assistant.locator(".message.assistant .bubble li")).toHaveCount(2);
+  await expect(assistant.locator(".message-meta")).toHaveCount(2);
+  await expect(assistant.locator(".message-meta").last()).toContainText(/\+\d+ ms/);
   await expect(assistant.getByRole("link", { name: "NCF Thesis Guide" })).toBeVisible();
   expect(
     await page.evaluate(() => ({ ...localStorage, ...sessionStorage })),

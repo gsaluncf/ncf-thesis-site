@@ -7,11 +7,13 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(projectRoot, "dist");
 const enhancementRoot = join(outputRoot, "enhancements");
 const iconOutputRoot = join(enhancementRoot, "icons");
+const vendorOutputRoot = join(enhancementRoot, "vendor");
 const copiedRoots = ["assets", "handouts", "images"];
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(enhancementRoot, { recursive: true });
 await mkdir(iconOutputRoot, { recursive: true });
+await mkdir(vendorOutputRoot, { recursive: true });
 
 for (const path of copiedRoots) {
   await cp(join(projectRoot, path), join(outputRoot, path), { recursive: true });
@@ -20,6 +22,22 @@ await cp(join(projectRoot, "vite.svg"), join(outputRoot, "vite.svg"));
 await cp(join(projectRoot, "src", "site.css"), join(enhancementRoot, "site.css"));
 await cp(join(projectRoot, "src", "enhance.js"), join(enhancementRoot, "enhance.js"));
 await cp(join(projectRoot, "src", "api-client.js"), join(enhancementRoot, "api-client.js"));
+let markdownRenderer = await readFile(
+  join(projectRoot, "src", "markdown-renderer.js"),
+  "utf8",
+);
+markdownRenderer = markdownRenderer
+  .replace('from "marked"', 'from "./vendor/marked.esm.js"')
+  .replace('from "dompurify"', 'from "./vendor/purify.es.js"');
+await writeFile(join(enhancementRoot, "markdown-renderer.js"), markdownRenderer, "utf8");
+await cp(
+  join(projectRoot, "node_modules", "marked", "lib", "marked.esm.js"),
+  join(vendorOutputRoot, "marked.esm.js"),
+);
+await cp(
+  join(projectRoot, "node_modules", "dompurify", "dist", "purify.es.mjs"),
+  join(vendorOutputRoot, "purify.es.js"),
+);
 await cp(join(projectRoot, "src", "icon-map.js"), join(enhancementRoot, "icon-map.js"));
 await cp(
   join(projectRoot, "src", "rooty-assistant.js"),
@@ -33,6 +51,23 @@ for (const iconName of usedIconNames) {
 }
 
 const sourceHtml = await readFile(join(projectRoot, "index.html"), "utf8");
+const entryPath = sourceHtml.match(/src="\.\/(assets\/[^"]+\.js)"/)?.[1];
+if (!entryPath) throw new Error("Could not identify Manu's dashboard entry bundle.");
+const outputEntryPath = join(outputRoot, entryPath);
+let entryBundle = await readFile(outputEntryPath, "utf8");
+const cannedMarker = '"Open Rooty chat"';
+const markerIndex = entryBundle.indexOf(cannedMarker);
+if (markerIndex < 0) throw new Error("Could not find Manu's canned Rooty component.");
+const componentPrefix = entryBundle.slice(0, markerIndex);
+const functionMatches = [...componentPrefix.matchAll(/function ([A-Za-z_$][\w$]*)\(\)\{/g)];
+const componentName = functionMatches.at(-1)?.[1];
+if (!componentName) throw new Error("Could not identify Manu's canned Rooty component name.");
+const invocation = `,i.jsx(${componentName},{})`;
+if (entryBundle.split(invocation).length !== 2) {
+  throw new Error("Manu's canned Rooty invocation was missing or ambiguous.");
+}
+entryBundle = entryBundle.replace(invocation, "");
+await writeFile(outputEntryPath, entryBundle, "utf8");
 const enhancements = [
   '    <link rel="stylesheet" href="/enhancements/site.css" />',
   '    <script type="module" src="/enhancements/enhance.js"></script>',
