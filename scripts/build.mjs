@@ -1,14 +1,17 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { usedIconNames } from "../src/icon-map.js";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(projectRoot, "dist");
 const enhancementRoot = join(outputRoot, "enhancements");
+const iconOutputRoot = join(enhancementRoot, "icons");
 const copiedRoots = ["assets", "handouts", "images"];
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(enhancementRoot, { recursive: true });
+await mkdir(iconOutputRoot, { recursive: true });
 
 for (const path of copiedRoots) {
   await cp(join(projectRoot, path), join(outputRoot, path), { recursive: true });
@@ -17,10 +20,17 @@ await cp(join(projectRoot, "vite.svg"), join(outputRoot, "vite.svg"));
 await cp(join(projectRoot, "src", "site.css"), join(enhancementRoot, "site.css"));
 await cp(join(projectRoot, "src", "enhance.js"), join(enhancementRoot, "enhance.js"));
 await cp(join(projectRoot, "src", "api-client.js"), join(enhancementRoot, "api-client.js"));
+await cp(join(projectRoot, "src", "icon-map.js"), join(enhancementRoot, "icon-map.js"));
 await cp(
   join(projectRoot, "src", "rooty-assistant.js"),
   join(enhancementRoot, "rooty-assistant.js"),
 );
+for (const iconName of usedIconNames) {
+  await cp(
+    join(projectRoot, "node_modules", "lucide-static", "icons", `${iconName}.svg`),
+    join(iconOutputRoot, `${iconName}.svg`),
+  );
+}
 
 const sourceHtml = await readFile(join(projectRoot, "index.html"), "utf8");
 const enhancements = [
