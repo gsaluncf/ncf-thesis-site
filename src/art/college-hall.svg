@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-labelledby="title">
+  <title id="title">Stylized line drawing of College Hall</title>
+  <rect width="800" height="420" fill="#40658d"/>
+  <path d="M0 335h800v85H0z" fill="#294c73"/>
+  <g fill="none" stroke="#dcebf7" stroke-width="8" opacity=".82">
+    <path d="M105 335h590M155 335V185h490v150M125 185h550L550 98H250z"/>
+    <path d="M206 335V220h78v115m232 0V220h78v115M342 335V206h116v129"/>
+    <path d="M366 206v-49h68v49M323 135h154M302 245h58m80 0h58"/>
+  </g>
+  <g fill="#b5d3e8" opacity=".62">
+    <circle cx="105" cy="267" r="39"/><circle cx="695" cy="267" r="39"/>
+    <rect x="99" y="266" width="12" height="86"/><rect x="689" y="266" width="12" height="86"/>
+  </g>
+</svg>

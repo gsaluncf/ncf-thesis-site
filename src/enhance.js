@@ -186,6 +186,24 @@ function repairLinks(scope) {
   }
 }
 
+const campusCardArtwork = new Map([
+  ["Cook Library", "cook-library"],
+  ["Writing Resource Center", "writing-quill"],
+  ["Office of the Registrar", "college-hall"],
+]);
+
+function decorateCampusCards(scope) {
+  for (const heading of scope.querySelectorAll("h3")) {
+    const artwork = campusCardArtwork.get(heading.textContent.trim());
+    if (!artwork) continue;
+    const card = heading.closest("a.group.relative");
+    const background = card?.querySelector(':scope > div[style*="background-image"]');
+    if (!card || !background) continue;
+    card.dataset.campusArt = artwork;
+    background.style.backgroundImage = `url("/enhancements/art/${artwork}.svg")`;
+  }
+}
+
 function replaceEmojiAndDashes(scope) {
   const walker = scope.createTreeWalker(scope.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -244,6 +262,7 @@ export function enhanceDashboard(scope = document) {
   addHeroFeature(scope);
   repairLinks(scope);
   replaceEmojiAndDashes(scope);
+  decorateCampusCards(scope);
   scope.documentElement.dataset.thesisEnhancements = "ready";
 }
 

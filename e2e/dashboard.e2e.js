@@ -67,6 +67,30 @@ test("the hero action opens Rooty and a streamed answer stays in the page", asyn
   ).toEqual({});
 });
 
+test("faculty videos and campus contact cards use the intended media", async ({ page }) => {
+  await page.goto("/");
+
+  const videos = page.locator('iframe[src^="https://player.vimeo.com/video/"]');
+  await expect(videos).toHaveCount(2);
+  await expect(videos.nth(0)).toHaveAttribute("title", /Heidi Harley/);
+  await expect(videos.nth(1)).toHaveAttribute("title", /Rory Renzy/);
+
+  for (const [heading, artwork] of [
+    ["Cook Library", "cook-library"],
+    ["Writing Resource Center", "writing-quill"],
+    ["Office of the Registrar", "college-hall"],
+  ]) {
+    const card = page.locator(`a[data-campus-art="${artwork}"]`, {
+      has: page.getByRole("heading", { name: heading, exact: true }),
+    });
+    await expect(card).toHaveCount(1);
+    await expect(card.locator("img.thesis-icon")).toHaveCSS(
+      "filter",
+      /invert\(1\)/,
+    );
+  }
+});
+
 test("the known NCF dead links are repaired", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Office of the Registrar" })).toHaveAttribute(

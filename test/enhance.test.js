@@ -17,6 +17,11 @@ function dashboardFixture() {
         </header>
         <nav><button><span>🏠</span><span>Home</span></button><button>📅 Timeline</button></nav>
         <main><a href="https://www.ncf.edu/about/administrative-offices/registrar/">Registrar</a></main>
+        <section class="campus-cards">
+          <a class="group relative"><div style="background-image:url('remote')"></div><div class="bg-navy/75"></div><div class="text-white"><span>🏛️</span><h3>Cook Library</h3></div></a>
+          <a class="group relative"><div style="background-image:url('remote')"></div><div class="bg-navy/75"></div><div class="text-white"><span>✍️</span><h3>Writing Resource Center</h3></div></a>
+          <a class="group relative"><div style="background-image:url('remote')"></div><div class="bg-navy/75"></div><div class="text-white"><span>📋</span><h3>Office of the Registrar</h3></div></a>
+        </section>
         <footer>New College of Florida • The Mighty Banyans 🌳</footer>
         <div class="fixed bottom-5 right-5"><button aria-label="Open Rooty chat">Ask Rooty 🌳</button></div>
       </div>
@@ -56,7 +61,7 @@ describe("enhanceDashboard", () => {
 
     expect(document.body.textContent).not.toMatch(/[🏠📅🌳]/u);
     expect(document.body.textContent).not.toContain("—");
-    expect(document.querySelectorAll('img.thesis-icon[src^="/enhancements/icons/"]')).toHaveLength(3);
+    expect(document.querySelectorAll('img.thesis-icon[src^="/enhancements/icons/"]')).toHaveLength(6);
   });
 
   it("repairs the known NCF links", () => {
@@ -66,6 +71,27 @@ describe("enhanceDashboard", () => {
     expect(document.querySelector("main a").href).toBe(
       "https://www.ncf.edu/departments/registrar/",
     );
+  });
+
+  it("uses local campus artwork and marks white-on-blue SVG icons", () => {
+    dashboardFixture();
+
+    enhanceDashboard(document);
+
+    const cards = [...document.querySelectorAll(".campus-cards a")];
+    expect(cards.map((card) => card.dataset.campusArt)).toEqual([
+      "cook-library",
+      "writing-quill",
+      "college-hall",
+    ]);
+    expect(
+      cards.map((card) => card.querySelector("div[style]").style.backgroundImage),
+    ).toEqual([
+      'url("/enhancements/art/cook-library.svg")',
+      'url("/enhancements/art/writing-quill.svg")',
+      'url("/enhancements/art/college-hall.svg")',
+    ]);
+    expect(document.querySelectorAll(".text-white img.thesis-icon")).toHaveLength(3);
   });
 
   it("replaces mascot metaphors and inflated copy with direct student guidance", () => {

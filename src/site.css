@@ -19,6 +19,20 @@ nav .thesis-icon {
   margin: 0;
 }
 
+.text-white .thesis-icon {
+  filter: brightness(0) invert(1);
+}
+
+[data-campus-art] > div[style*="background-image"] {
+  background-color: #315278;
+  background-position: center;
+  background-size: cover;
+}
+
+[data-campus-art] > div[class*="bg-navy"] {
+  background-color: rgb(18 46 78 / 58%);
+}
+
 .thesis-hero-feature {
   width: min(48rem, 100%);
   display: grid;

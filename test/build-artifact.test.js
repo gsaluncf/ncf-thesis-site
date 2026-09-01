@@ -48,6 +48,15 @@ describe("the Cloudflare Pages artifact", () => {
 
     expect(headers).toContain("Content-Security-Policy:");
     expect(headers).toContain("Cache-Control: no-store");
+    expect(headers).toContain("frame-src 'self' https://player.vimeo.com");
     expect(headers).toContain("Referrer-Policy: no-referrer");
+  });
+
+  it("copies the local campus card artwork", async () => {
+    for (const name of ["cook-library", "college-hall", "writing-quill"]) {
+      expect(
+        (await stat(new URL(`../dist/enhancements/art/${name}.svg`, import.meta.url))).isFile(),
+      ).toBe(true);
+    }
   });
 });

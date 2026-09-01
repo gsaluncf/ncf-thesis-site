@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-labelledby="title">
+  <title id="title">Stylized line drawing of Jane Bancroft Cook Library</title>
+  <rect width="800" height="420" fill="#40658d"/>
+  <path d="M0 330h800v90H0z" fill="#294c73"/>
+  <g fill="none" stroke="#dcebf7" stroke-width="8" opacity=".82">
+    <path d="M85 322h630M140 322V158h520v164M174 158h452l-52-50H226z"/>
+    <path d="M188 322V205h70v117m142 0V205h70v117m142 0V205h-70v117"/>
+    <path d="M292 198h74v55h-74zm0 86h74v38h-74zm216-86h74v55h-74zm0 86h74v38h-74z"/>
+  </g>
+  <path d="M82 350c85-34 144-31 222 0 77-40 160-40 235 0 60-27 116-30 179 0" fill="none" stroke="#b5d3e8" stroke-width="6" opacity=".6"/>
+</svg>

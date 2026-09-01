@@ -7,12 +7,14 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(projectRoot, "dist");
 const enhancementRoot = join(outputRoot, "enhancements");
 const iconOutputRoot = join(enhancementRoot, "icons");
+const artOutputRoot = join(enhancementRoot, "art");
 const vendorOutputRoot = join(enhancementRoot, "vendor");
 const copiedRoots = ["assets", "handouts", "images"];
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(enhancementRoot, { recursive: true });
 await mkdir(iconOutputRoot, { recursive: true });
+await mkdir(artOutputRoot, { recursive: true });
 await mkdir(vendorOutputRoot, { recursive: true });
 
 for (const path of copiedRoots) {
@@ -39,6 +41,7 @@ await cp(
   join(vendorOutputRoot, "purify.es.js"),
 );
 await cp(join(projectRoot, "src", "icon-map.js"), join(enhancementRoot, "icon-map.js"));
+await cp(join(projectRoot, "src", "art"), artOutputRoot, { recursive: true });
 await cp(
   join(projectRoot, "src", "rooty-assistant.js"),
   join(enhancementRoot, "rooty-assistant.js"),
@@ -115,7 +118,7 @@ await writeFile(join(outputRoot, "404.html"), notFoundHtml, "utf8");
 
 const headers = `/*
   Cache-Control: no-store
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://player.vimeo.com; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
