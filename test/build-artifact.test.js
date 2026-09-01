@@ -14,6 +14,7 @@ describe("the Cloudflare Pages artifact", () => {
     const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
 
     expect(html).toContain('src="/enhancements/enhance.js"');
+    expect(html).toContain('src="/enhancements/dashboard-bootstrap.js"');
     expect(html).toContain('href="/enhancements/site.css"');
     expect((await stat(new URL("../dist/assets", import.meta.url))).isDirectory()).toBe(
       true,
@@ -28,7 +29,11 @@ describe("the Cloudflare Pages artifact", () => {
 
   it("ships Manu's dashboard without instantiating its canned Rooty component", async () => {
     const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
-    const entryPath = html.match(/src="\.\/(assets\/[^"]+\.js)"/)?.[1];
+    const bootstrap = await readFile(
+      new URL("../dist/enhancements/dashboard-bootstrap.js", import.meta.url),
+      "utf8",
+    );
+    const entryPath = bootstrap.match(/import\("\/(assets\/[^"]+\.js)"\)/)?.[1];
     expect(entryPath).toBeTruthy();
 
     const entry = await readFile(new URL(`../dist/${entryPath}`, import.meta.url), "utf8");

@@ -91,6 +91,30 @@ test("faculty videos and campus contact cards use the intended media", async ({ 
   }
 });
 
+test("My Progress saves and restores the signed-in student's checklist", async ({ page }) => {
+  let items = {};
+  await page.route("**/api/progress", async (route) => {
+    if (route.request().method() === "PUT") {
+      items = route.request().postDataJSON().items;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items, updatedAt: "2026-09-01T12:00:00Z" }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /My Progress/ }).first().click();
+  const firstItem = page.locator('input[type="checkbox"]').first();
+  await firstItem.check();
+  await expect.poll(() => items["0-0"]).toBe(true);
+
+  await page.reload();
+  await page.getByRole("button", { name: /My Progress/ }).first().click();
+  await expect(page.locator('input[type="checkbox"]').first()).toBeChecked();
+});
+
 test("the known NCF dead links are repaired", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Office of the Registrar" })).toHaveAttribute(

@@ -24,6 +24,10 @@ await cp(join(projectRoot, "vite.svg"), join(outputRoot, "vite.svg"));
 await cp(join(projectRoot, "src", "site.css"), join(enhancementRoot, "site.css"));
 await cp(join(projectRoot, "src", "enhance.js"), join(enhancementRoot, "enhance.js"));
 await cp(join(projectRoot, "src", "api-client.js"), join(enhancementRoot, "api-client.js"));
+await cp(
+  join(projectRoot, "src", "progress-client.js"),
+  join(enhancementRoot, "progress-client.js"),
+);
 let markdownRenderer = await readFile(
   join(projectRoot, "src", "markdown-renderer.js"),
   "utf8",
@@ -71,11 +75,30 @@ if (entryBundle.split(invocation).length !== 2) {
 }
 entryBundle = entryBundle.replace(invocation, "");
 await writeFile(outputEntryPath, entryBundle, "utf8");
+const bootstrap = `import { PROGRESS_KEY, installProgressSync, loadProgress } from "./progress-client.js";
+
+try {
+  const items = await loadProgress();
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(items));
+} catch {
+  // Keep the last local cache if the private progress API is briefly unavailable.
+}
+installProgressSync();
+await import("/${entryPath}");
+`;
+await writeFile(
+  join(enhancementRoot, "dashboard-bootstrap.js"),
+  bootstrap,
+  "utf8",
+);
 const enhancements = [
   '    <link rel="stylesheet" href="/enhancements/site.css" />',
   '    <script type="module" src="/enhancements/enhance.js"></script>',
 ].join("\n");
-const outputHtml = sourceHtml.replace("  </head>", `${enhancements}\n  </head>`);
+const originalEntry = `src="./${entryPath}"`;
+const outputHtml = sourceHtml
+  .replace(originalEntry, 'src="/enhancements/dashboard-bootstrap.js"')
+  .replace("  </head>", `${enhancements}\n  </head>`);
 await writeFile(join(outputRoot, "index.html"), outputHtml, "utf8");
 
 const notFoundHtml = `<!doctype html>
