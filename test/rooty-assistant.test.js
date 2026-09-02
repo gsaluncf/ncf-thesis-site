@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { RootyAssistant } from "../src/rooty-assistant.js";
 
 afterEach(() => {
+  vi.useRealTimers();
   document.body.replaceChildren();
 });
 
@@ -112,6 +113,7 @@ describe("RootyAssistant", () => {
     expect(root.querySelector(".message.assistant.status .bubble").textContent).toContain(
       "Question received",
     );
+    expect(root.querySelector(".message.assistant.status .working-spinner")).not.toBeNull();
     expect(root.querySelector(".message.assistant.status .message-meta").textContent).toContain(
       "+0 ms",
     );
@@ -120,6 +122,63 @@ describe("RootyAssistant", () => {
     release();
     await vi.waitFor(() => expect(root.textContent).toContain("The answer."));
     expect(root.querySelector(".message.assistant:not(.status) .message-meta")).not.toBeNull();
+  });
+
+  it("keeps the student informed every ten seconds while background work continues", async () => {
+    vi.useFakeTimers();
+    const element = mount();
+    element.assistantStream = async function* () {
+      await new Promise(() => {});
+    };
+
+    element.open();
+    const root = element.shadowRoot;
+    root.querySelector("textarea").value = "What comes after my prospectus?";
+    root.querySelector("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(root.querySelector(".message.assistant.status .bubble").textContent).toContain(
+      "Still searching the NCF thesis materials.",
+    );
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(root.querySelector(".message.assistant.status .bubble").textContent).toContain(
+      "Reviewing the most relevant sources.",
+    );
+    element.reset();
+  });
+
+  it("stops background work after two minutes and offers a retry", async () => {
+    vi.useFakeTimers();
+    const element = mount();
+    element.assistantStream = async function* (_messages, { signal }) {
+      await new Promise((resolve, reject) => {
+        signal.addEventListener(
+          "abort",
+          () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })),
+          { once: true },
+        );
+      });
+      yield { type: "done" };
+    };
+
+    element.open();
+    const root = element.shadowRoot;
+    root.querySelector("textarea").value = "Help me organize my literature review.";
+    root.querySelector("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    );
+
+    await vi.advanceTimersByTimeAsync(120_000);
+    await Promise.resolve();
+
+    expect(root.textContent).toContain(
+      "This is taking longer than expected. Please try again.",
+    );
+    expect(root.querySelector(".message.assistant.status")).toBeNull();
+    expect(root.querySelector("textarea").disabled).toBe(false);
   });
 
   it("shows progressive status immediately without adding it to conversation history", async () => {

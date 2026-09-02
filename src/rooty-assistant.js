@@ -7,6 +7,14 @@ const icons = {
   send: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`,
 };
 
+const workingMessages = [
+  "Still searching the NCF thesis materials.",
+  "Reviewing the most relevant sources.",
+  "Putting the answer together.",
+];
+const STATUS_INTERVAL_MS = 10_000;
+const REQUEST_TIMEOUT_MS = 120_000;
+
 const styles = `
   :host { --navy:#202944; --gold:#c8a951; --paper:#f7f5ef; color:#202944; font-family:Inter,Arial,sans-serif; }
   *, *::before, *::after { box-sizing:border-box; }
@@ -34,7 +42,9 @@ const styles = `
   .bubble { max-width:87%; padding:.7rem .85rem; border-radius:1rem; overflow-wrap:anywhere; font-size:.86rem; line-height:1.52; }
   .assistant .bubble { border-bottom-left-radius:.25rem; background:#e9eaed; color:#202944; }
   .user .bubble { border-bottom-right-radius:.25rem; background:var(--navy); color:#fff; white-space:pre-wrap; }
-  .assistant.status .bubble { border:1px solid rgb(32 41 68 / 12%); background:#fff; color:#4b5563; font-style:italic; }
+  .assistant.status .bubble { display:flex; align-items:center; gap:.65rem; border:1px solid rgb(32 41 68 / 12%); background:#fff; color:#4b5563; font-style:italic; }
+  .working-spinner { width:1.15rem; height:1.15rem; flex:0 0 auto; border:.16rem solid rgb(32 41 68 / 16%); border-top-color:var(--gold); border-right-color:var(--navy); border-radius:999px; animation:rooty-spin .8s linear infinite; }
+  @keyframes rooty-spin { to { transform:rotate(1turn); } }
   .message-meta { margin:.22rem .35rem 0; color:#747b88; font-size:.62rem; font-variant-numeric:tabular-nums; letter-spacing:.01em; }
   .bubble > :first-child { margin-top:0; }
   .bubble > :last-child { margin-bottom:0; }
@@ -65,7 +75,10 @@ const styles = `
     .launcher { width:4.3rem; height:4.3rem; }
     .launcher-label { display:none; }
   }
-  @media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto !important; transition:none !important; } }
+  @media (prefers-reduced-motion:reduce) {
+    * { scroll-behavior:auto !important; transition:none !important; }
+    .working-spinner { animation:none; border-color:var(--gold) var(--navy) var(--gold) var(--navy); }
+  }
 `;
 
 function safeSourceUrl(value) {
@@ -92,6 +105,9 @@ export class RootyAssistant extends HTMLElement {
     this.wallNow = () => new Date();
     this.elapsedNow = () => globalThis.performance.now();
     this.abortController = null;
+    this.statusInterval = null;
+    this.requestTimeout = null;
+    this.requestTimedOut = false;
     this.previousFocus = null;
     this.shadowRoot.addEventListener("click", (event) => this.onClick(event));
     this.shadowRoot.addEventListener("submit", (event) => this.onSubmit(event));
@@ -120,7 +136,9 @@ export class RootyAssistant extends HTMLElement {
 
   reset() {
     this.abortController?.abort();
+    this.stopWorkingTimers();
     this.abortController = null;
+    this.requestTimedOut = false;
     this.isBusy = false;
     this.messages = [];
     this.sources = [];
@@ -207,7 +225,12 @@ export class RootyAssistant extends HTMLElement {
       row.setAttribute("role", "status");
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.textContent = this.statusText;
+      const spinner = document.createElement("span");
+      spinner.className = "working-spinner";
+      spinner.setAttribute("aria-hidden", "true");
+      const text = document.createElement("span");
+      text.textContent = this.statusText;
+      bubble.append(spinner, text);
       row.append(bubble, this.renderTiming(this.statusTiming));
       container.append(row);
     }
@@ -219,6 +242,31 @@ export class RootyAssistant extends HTMLElement {
       timestamp: this.wallNow().toISOString(),
       elapsedMs: Math.max(0, Math.round(this.elapsedNow() - requestStartedAt)),
     };
+  }
+
+  startWorkingTimers(requestStartedAt) {
+    let messageIndex = 0;
+    this.statusInterval = setInterval(() => {
+      this.statusText = workingMessages[messageIndex % workingMessages.length];
+      messageIndex += 1;
+      this.statusTiming = this.captureTiming(requestStartedAt);
+      this.renderMessages();
+    }, STATUS_INTERVAL_MS);
+    this.requestTimeout = setTimeout(() => {
+      this.requestTimedOut = true;
+      this.abortController?.abort();
+    }, REQUEST_TIMEOUT_MS);
+  }
+
+  stopStatusUpdates() {
+    if (this.statusInterval !== null) clearInterval(this.statusInterval);
+    this.statusInterval = null;
+  }
+
+  stopWorkingTimers() {
+    this.stopStatusUpdates();
+    if (this.requestTimeout !== null) clearTimeout(this.requestTimeout);
+    this.requestTimeout = null;
   }
 
   renderTiming(timing) {
@@ -291,6 +339,8 @@ export class RootyAssistant extends HTMLElement {
     this.statusText = "Question received. Sending it securely.";
     this.statusTiming = this.captureTiming(requestStartedAt);
     this.abortController = new AbortController();
+    this.requestTimedOut = false;
+    this.startWorkingTimers(requestStartedAt);
     this.render();
 
     let answer = "";
@@ -307,6 +357,7 @@ export class RootyAssistant extends HTMLElement {
           this.renderMessages();
         }
         if (eventData.type === "token") {
+          this.stopStatusUpdates();
           this.statusText = "";
           answer += eventData.text;
           const lastMessage = this.messages.at(-1);
@@ -334,7 +385,13 @@ export class RootyAssistant extends HTMLElement {
       }
     } catch (error) {
       this.statusText = "";
-      if (error.name !== "AbortError") {
+      if (error.name === "AbortError" && this.requestTimedOut) {
+        this.messages.push({
+          role: "assistant",
+          content: "This is taking longer than expected. Please try again.",
+          ...this.captureTiming(requestStartedAt),
+        });
+      } else if (error.name !== "AbortError") {
         this.messages.push({
           role: "assistant",
           content: error.message,
@@ -342,10 +399,12 @@ export class RootyAssistant extends HTMLElement {
         });
       }
     } finally {
+      this.stopWorkingTimers();
       this.isBusy = false;
       this.statusText = "";
       this.statusTiming = null;
       this.abortController = null;
+      this.requestTimedOut = false;
       this.render();
       queueMicrotask(() => this.shadowRoot.querySelector("textarea")?.focus());
     }
