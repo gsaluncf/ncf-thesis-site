@@ -28,6 +28,24 @@ function dashboardFixture() {
     </div>`;
 }
 
+function refinementFixture() {
+  document.body.innerHTML = `
+    <div id="root">
+      <header><div class="relative z-10"><h1>Your Senior Thesis Journey Starts Here</h1></div></header>
+      <nav>
+        <button>Home</button>
+        <button aria-current="page">Research Tools</button>
+      </nav>
+      <main>
+        <section class="mb-8"><h3>AI Tools - Use Thoughtfully</h3><p>Duplicated AI directory</p></section>
+        <section><h3>Motivation Wall</h3><p>Generic quotations</p></section>
+        <section class="mb-8"><h3>Citation Style Quick-Reference</h3><table></table></section>
+        <section><h3>NCF Writing Program & Writing Resource Center</h3><p>Current hours</p></section>
+        <section><h2>My Progress</h2><p>Track your thesis milestones from start to finish.</p></section>
+      </main>
+    </div>`;
+}
+
 describe("enhanceDashboard", () => {
   it("removes canned Rooty, mounts the live assistant, and adds one hero feature", () => {
     dashboardFixture();
@@ -110,5 +128,32 @@ describe("enhanceDashboard", () => {
       "Write down the question you most want to answer, then discuss it with your faculty sponsor.",
     );
     expect(main.textContent).not.toContain("Every great thesis");
+  });
+
+  it("uses a compact interior shell and removes duplicated or generic sections", () => {
+    refinementFixture();
+
+    enhanceDashboard(document);
+
+    expect(document.documentElement.dataset.thesisView).toBe("interior");
+    expect(document.body.textContent).not.toContain("Duplicated AI directory");
+    expect(document.body.textContent).not.toContain("Generic quotations");
+    expect(document.querySelector("[data-thesis-citation-note]")).not.toBeNull();
+    expect(document.querySelector("[data-thesis-writing-note]")).not.toBeNull();
+  });
+
+  it("replaces obsolete physical and email submission instructions", () => {
+    dashboardFixture();
+    const main = document.querySelector("main");
+    main.append(
+      "Sponsor signs abstract. Unbound, in envelope; PDF + abstract to thesis@ncf.edu. Sponsor signature: Required before submission. Your sponsor must sign your abstract.",
+    );
+
+    enhanceDashboard(document);
+
+    expect(main.textContent).toContain("Library submission form");
+    expect(main.textContent).toContain("Print copies are optional");
+    expect(main.textContent).not.toContain("Sponsor signs abstract");
+    expect(main.textContent).not.toContain("must sign your abstract");
   });
 });

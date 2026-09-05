@@ -109,10 +109,46 @@ test("My Progress saves and restores the signed-in student's checklist", async (
   const firstItem = page.locator('input[type="checkbox"]').first();
   await firstItem.check();
   await expect.poll(() => items["0-0"]).toBe(true);
+  await expect(page.locator("[data-thesis-progress-status]")).toContainText("Saved securely");
 
   await page.reload();
   await page.getByRole("button", { name: /My Progress/ }).first().click();
   await expect(page.locator('input[type="checkbox"]').first()).toBeChecked();
+});
+
+test("interior views prioritize section content and current official guidance", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Resources & Tools/ }).first().click();
+  await expect(page.locator("html")).toHaveAttribute("data-thesis-view", "interior");
+  await expect(page.getByRole("heading", { name: "AI Tools - Use Thoughtfully" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: /Writing Support/ }).first().click();
+  await expect(page.getByRole("heading", { name: "Motivation Wall" })).toHaveCount(0);
+  await expect(page.locator("[data-thesis-writing-note]")).toContainText("Schedules change");
+
+  await page.getByRole("button", { name: /Formatting & Citations/ }).first().click();
+  await expect(page.locator("[data-thesis-citation-note]")).toContainText("orientation");
+  await expect(page.locator("main")).not.toContainText("Sponsor signature: Required");
+  await expect(page.locator("main")).toContainText("Print copies are optional");
+  await expect(page.locator("[data-thesis-submission-note] a")).toHaveAttribute(
+    "href",
+    "https://www.ncf.edu/library/services/",
+  );
+
+  await page.getByRole("button", { name: /Timeline/ }).first().click();
+  await expect(page.locator("main")).not.toContainText("Email submission:");
+  await expect(page.locator("[data-thesis-submission-note]")).toContainText(
+    "Library submission instructions",
+  );
+
+  await page.getByRole("button", { name: /Templates/ }).first().click();
+  await page.getByRole("button", { name: /Sample Title Page & Abstract/ }).click();
+  await expect(page.locator("main")).not.toContainText("must sign the abstract");
+  await expect(page.locator("main")).toContainText("does not need a sponsor signature");
+  await expect(page.locator("[data-thesis-submission-note] a")).toHaveAttribute(
+    "href",
+    "https://www.ncf.edu/library/services/",
+  );
 });
 
 test("the known NCF dead links are repaired", async ({ page }) => {

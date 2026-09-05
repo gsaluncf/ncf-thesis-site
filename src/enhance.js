@@ -1,5 +1,6 @@
 import "./rooty-assistant.js";
 import { emojiToLucide } from "./icon-map.js";
+import { getProgressStatus, subscribeProgressStatus } from "./progress-client.js";
 
 const knownLinkRepairs = new Map([
   [
@@ -133,10 +134,73 @@ const contentReplacements = new Map([
     "Every checked box is a root in the ground. By the time you check that last one, you'll have built something that will live in Cook Library forever. That's not nothing — that's everything.",
     "Complete one milestone at a time. Your final thesis and abstract will become part of Cook Library's permanent collection.",
   ],
+  [
+    "Submit PDF + abstract to thesis@ncf.edu",
+    "Use the current Cook Library submission process",
+  ],
+  [
+    "Sponsor signs abstract",
+    "Sponsor approval is routed through the Library submission form",
+  ],
+  [
+    "Unbound, in envelope; PDF + abstract to thesis@ncf.edu",
+    "Upload the final PDF using the Library submission form. Print copies are optional.",
+  ],
+  [
+    "Email submission: thesis@ncf.edu (PDF + Word/RTF abstract)",
+    "Submission questions: thesis@ncf.edu",
+  ],
+  [
+    "Sponsor signature: Required before submission",
+    "Sponsor approval: Routed through the Library submission form",
+  ],
+  [
+    "Your sponsor must sign your abstract. Plan to have your final abstract ready at least one week before the submission deadline.",
+    "The current NCF catalog says the abstract does not need a sponsor signature. Sponsor approval is routed through the Library submission form. Print copies are optional.",
+  ],
+  [
+    "Your sponsor must sign your abstract.",
+    "The current NCF catalog says the abstract does not need a sponsor signature.",
+  ],
+  [
+    "Your sponsor must sign the abstract.",
+    "The current NCF catalog says the abstract does not need a sponsor signature.",
+  ],
+  [
+    "reads all drafts, signs your abstract.",
+    "reads your drafts, and approves the final submission.",
+  ],
+  [
+    "Sponsor signed abstract",
+    "Sponsor approval routed through the Library submission form",
+  ],
+  [
+    "Submitted physical copy to Cook Library (unbound) by Monday 5pm of graduation week",
+    "Submitted the final PDF through the Cook Library submission form",
+  ],
+  [
+    "Emailed PDF + abstract Word/RTF file to thesis@ncf.edu",
+    "Confirmed Library submission and retained the receipt",
+  ],
 ]);
 
 const emojiPattern =
   /\p{Extended_Pictographic}(?:[\uFE0E\uFE0F]|\u200D\p{Extended_Pictographic})*/gu;
+
+const structuredCopyReplacements = new Map([
+  [
+    "Email submission: thesis@ncf.edu (PDF + Word/RTF abstract)",
+    "<strong>Submission questions:</strong> thesis@ncf.edu",
+  ],
+  [
+    "Sponsor signature: Required before submission",
+    "<strong>Sponsor approval:</strong> Routed through the Library submission form",
+  ],
+  [
+    "Your sponsor must sign the abstract.",
+    "The current NCF catalog says the abstract does not need a sponsor signature.",
+  ],
+]);
 
 function removeCannedRooty(scope) {
   for (const button of scope.querySelectorAll(
@@ -204,6 +268,126 @@ function decorateCampusCards(scope) {
   }
 }
 
+function activeView(scope) {
+  const active = scope.querySelector('nav button[aria-current="page"]');
+  return active?.textContent.trim() === "Home" ? "home" : "interior";
+}
+
+function findHeading(scope, selector, text) {
+  return [...scope.querySelectorAll(selector)].find(
+    (heading) => heading.textContent.trim() === text,
+  );
+}
+
+function removeSection(scope, headingText) {
+  findHeading(scope, "h3", headingText)?.closest("section")?.remove();
+}
+
+function normalizeCopy(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function replaceStructuredCopy(scope) {
+  for (const [source, replacement] of structuredCopyReplacements) {
+    const candidates = [
+      ...scope.querySelectorAll("main p, main li, main label, main span, main div"),
+    ];
+    const element = candidates.find((candidate) => {
+      if (normalizeCopy(candidate.textContent) !== source) return false;
+      return ![...candidate.children].some(
+        (child) => normalizeCopy(child.textContent) === source,
+      );
+    });
+    if (element) element.innerHTML = replacement;
+  }
+}
+
+function addReferenceNote(scope, headingText, attribute, html) {
+  const heading = findHeading(scope, "h3", headingText);
+  const section = heading?.closest("section") || heading?.parentElement;
+  if (!heading || !section || section.querySelector(`[${attribute}]`)) return;
+  const note = scope.createElement("aside");
+  note.setAttribute(attribute, "true");
+  note.className = "thesis-reference-note";
+  note.innerHTML = html;
+  heading.insertAdjacentElement("afterend", note);
+}
+
+function progressStatusText(status) {
+  if (status.state === "saving") return "Saving securely...";
+  if (status.state === "save-error") {
+    return "Progress could not be saved. Keep this page open and try another change.";
+  }
+  if (status.state === "load-error") {
+    return "Progress could not be loaded. Your last browser copy is still available.";
+  }
+  if (status.state === "saved" && status.updatedAt) {
+    const savedAt = new Date(status.updatedAt);
+    if (!Number.isNaN(savedAt.valueOf())) {
+      return `Saved securely at ${savedAt.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`;
+    }
+  }
+  if (status.state === "saved") return "Saved securely.";
+  return "Progress saves automatically to your NCF account.";
+}
+
+function addSubmissionNote(scope) {
+  const sectionTitle = findHeading(scope, "h2", "Timeline") ||
+    findHeading(scope, "h2", "Templates & Worksheets") ||
+    findHeading(scope, "h2", "Thesis Formatting & Citations") ||
+    findHeading(scope, "h2", "My Progress");
+  if (!sectionTitle || scope.querySelector("[data-thesis-submission-note]")) return;
+  const banner = sectionTitle.closest(".mb-8") || sectionTitle.parentElement;
+  const note = scope.createElement("aside");
+  note.className = "thesis-reference-note";
+  note.setAttribute("data-thesis-submission-note", "true");
+  note.innerHTML = `Use Cook Library's current electronic submission process. Print copies are optional. <a href="https://www.ncf.edu/library/services/" target="_blank" rel="noopener noreferrer">Open the Library submission instructions</a>.`;
+  banner.insertAdjacentElement("afterend", note);
+}
+
+function updateProgressStatus(scope, status = getProgressStatus()) {
+  const note = scope.querySelector("[data-thesis-progress-status]");
+  if (!note) return;
+  note.dataset.state = status.state;
+  note.textContent = progressStatusText(status);
+}
+
+function addProgressStatus(scope) {
+  const heading = findHeading(scope, "h2", "My Progress");
+  if (!heading || scope.querySelector("[data-thesis-progress-status]")) return;
+  const banner = heading.closest(".mb-8") || heading.parentElement;
+  const note = scope.createElement("p");
+  note.className = "thesis-progress-status";
+  note.setAttribute("data-thesis-progress-status", "true");
+  note.setAttribute("role", "status");
+  note.setAttribute("aria-live", "polite");
+  banner.insertAdjacentElement("afterend", note);
+  updateProgressStatus(scope);
+}
+
+function refineSections(scope) {
+  scope.documentElement.dataset.thesisView = activeView(scope);
+  removeSection(scope, "AI Tools - Use Thoughtfully");
+  removeSection(scope, "Motivation Wall");
+  addReferenceNote(
+    scope,
+    "Citation Style Quick-Reference",
+    "data-thesis-citation-note",
+    `This unofficial table is only an orientation, not a complete citation. Confirm the current style edition and your sponsor's requirements. <a href="https://www.ncf.edu/academics/writing-program/writing-resource-center/" target="_blank" rel="noopener noreferrer">Ask the NCF Writing Resource Center for help</a>.`,
+  );
+  addReferenceNote(
+    scope,
+    "NCF Writing Program & Writing Resource Center",
+    "data-thesis-writing-note",
+    `Schedules change by term. <a href="https://ncf.mywconline.com/" target="_blank" rel="noopener noreferrer">Check the official appointment schedule</a> for current availability. Contact details reviewed September 4, 2026.`,
+  );
+  addSubmissionNote(scope);
+  addProgressStatus(scope);
+}
+
 function replaceEmojiAndDashes(scope) {
   const walker = scope.createTreeWalker(scope.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -262,9 +446,15 @@ export function enhanceDashboard(scope = document) {
   addHeroFeature(scope);
   repairLinks(scope);
   replaceEmojiAndDashes(scope);
+  replaceStructuredCopy(scope);
   decorateCampusCards(scope);
+  refineSections(scope);
   scope.documentElement.dataset.thesisEnhancements = "ready";
 }
+
+subscribeProgressStatus((status) => {
+  if (typeof document !== "undefined") updateProgressStatus(document, status);
+});
 
 if (typeof document !== "undefined") {
   enhanceDashboard(document);
@@ -279,6 +469,11 @@ if (typeof document !== "undefined") {
         enhanceDashboard(document);
       });
     });
-    observer.observe(root, { childList: true, subtree: true });
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["aria-current"],
+      childList: true,
+      subtree: true,
+    });
   }
 }
