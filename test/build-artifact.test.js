@@ -37,7 +37,7 @@ describe("the Cloudflare Pages artifact", () => {
     expect(entryPath).toBeTruthy();
 
     const entry = await readFile(new URL(`../dist/${entryPath}`, import.meta.url), "utf8");
-    expect(entry).not.toContain(",i.jsx(sf,{})");
+    expect(entry).not.toContain(",s.jsx(hm,{setActiveTab:t})");
   });
 
   it("ships a useful custom 404 page", async () => {

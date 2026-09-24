@@ -3,14 +3,12 @@ import { expect, test } from "@playwright/test";
 
 const navigationLabels = [
   "Home",
-  "Timeline",
+  "Sponsor & Committee",
   "Resources & Tools",
-  "Templates",
   "Formatting & Citations",
-  "Research Tools",
   "Writing Support",
-  "Your Advisor",
   "My Progress",
+  "Bacc Defense",
 ];
 
 test("all dashboard views render without emoji, em dashes, or canned Rooty", async ({
@@ -26,7 +24,7 @@ test("all dashboard views render without emoji, em dashes, or canned Rooty", asy
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/\p{Extended_Pictographic}/u);
     expect(text).not.toContain("—");
-    await expect(page.locator("nav img.thesis-icon")).toHaveCount(9);
+    await expect(page.locator("nav img.thesis-icon")).toHaveCount(navigationLabels.length);
   }
 });
 
@@ -67,28 +65,25 @@ test("the hero action opens Rooty and a streamed answer stays in the page", asyn
   ).toEqual({});
 });
 
-test("faculty videos and campus contact cards use the intended media", async ({ page }) => {
+test("faculty videos use the intended media", async ({ page }) => {
   await page.goto("/");
+  await page.locator("#section-faculty-videos > button").click();
 
   const videos = page.locator('iframe[src^="https://player.vimeo.com/video/"]');
   await expect(videos).toHaveCount(2);
   await expect(videos.nth(0)).toHaveAttribute("title", /Heidi Harley/);
   await expect(videos.nth(1)).toHaveAttribute("title", /Rory Renzy/);
+});
 
-  for (const [heading, artwork] of [
-    ["Cook Library", "cook-library"],
-    ["Writing Resource Center", "writing-quill"],
-    ["Office of the Registrar", "college-hall"],
-  ]) {
-    const card = page.locator(`a[data-campus-art="${artwork}"]`, {
-      has: page.getByRole("heading", { name: heading, exact: true }),
-    });
-    await expect(card).toHaveCount(1);
-    await expect(card.locator("img.thesis-icon")).toHaveCSS(
-      "filter",
-      /invert\(1\)/,
-    );
-  }
+test("home keeps Manu's four quick links", async ({ page }) => {
+  await page.goto("/");
+  const quickLinks = page.locator('main a[href^="#section-"]');
+  await expect(quickLinks).toHaveText([
+    "What Is a Senior Thesis?",
+    "What Should I Do Right Now?",
+    "Getting Ready & Build a Plan",
+    "Thesis Timeline",
+  ]);
 });
 
 test("My Progress saves and restores the signed-in student's checklist", async ({ page }) => {
@@ -116,18 +111,15 @@ test("My Progress saves and restores the signed-in student's checklist", async (
   await expect(page.locator('input[type="checkbox"]').first()).toBeChecked();
 });
 
-test("interior views prioritize section content and current official guidance", async ({ page }) => {
+test("interior views use the compact shell and current official guidance", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Resources & Tools/ }).first().click();
   await expect(page.locator("html")).toHaveAttribute("data-thesis-view", "interior");
-  await expect(page.getByRole("heading", { name: "AI Tools - Use Thoughtfully" })).toHaveCount(0);
 
   await page.getByRole("button", { name: /Writing Support/ }).first().click();
-  await expect(page.getByRole("heading", { name: "Motivation Wall" })).toHaveCount(0);
   await expect(page.locator("[data-thesis-writing-note]")).toContainText("Schedules change");
 
   await page.getByRole("button", { name: /Formatting & Citations/ }).first().click();
-  await expect(page.locator("[data-thesis-citation-note]")).toContainText("orientation");
   await expect(page.locator("main")).not.toContainText("Sponsor signature: Required");
   await expect(page.locator("main")).toContainText("Print copies are optional");
   await expect(page.locator("[data-thesis-submission-note] a")).toHaveAttribute(
@@ -135,40 +127,27 @@ test("interior views prioritize section content and current official guidance", 
     "https://www.ncf.edu/library/services/",
   );
 
-  await page.getByRole("button", { name: /Timeline/ }).first().click();
+  await page.getByRole("button", { name: /My Progress/ }).first().click();
   await expect(page.locator("main")).not.toContainText("Email submission:");
   await expect(page.locator("[data-thesis-submission-note]")).toContainText(
     "Library submission instructions",
   );
-
-  await page.getByRole("button", { name: /Templates/ }).first().click();
-  await page.getByRole("button", { name: /Sample Title Page & Abstract/ }).click();
-  await expect(page.locator("main")).not.toContainText("must sign the abstract");
-  await expect(page.locator("main")).toContainText("does not need a sponsor signature");
-  await expect(page.locator("[data-thesis-submission-note] a")).toHaveAttribute(
-    "href",
-    "https://www.ncf.edu/library/services/",
-  );
 });
 
-test("the known NCF dead links are repaired", async ({ page }) => {
+test("no view links to the known dead NCF pages", async ({ page }) => {
+  const deadLinks = [
+    "https://www.ncf.edu/about/administrative-offices/registrar/",
+    "https://www.ncf.edu/about/administrative-offices/office-of-the-provost/academic-policies/",
+    "https://www.ncf.edu/student-life/counseling-and-wellness-center/",
+    "https://www.ncf.edu/academics/isps/",
+  ];
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Office of the Registrar" })).toHaveAttribute(
-    "href",
-    "https://www.ncf.edu/departments/registrar/",
-  );
-
-  await page.getByRole("button", { name: /Resources & Tools/ }).first().click();
-  await expect(page.getByRole("link", { name: /Academic Honesty Policy/ })).toHaveAttribute(
-    "href",
-    "https://www.ncf.edu/wp-content/uploads/2025/08/4.3005-Academic-Honor-Code.pdf",
-  );
-
-  await page.getByRole("button", { name: /Writing Support/ }).first().click();
-  await expect(page.getByRole("link", { name: /Counseling/ })).toHaveAttribute(
-    "href",
-    "https://www.ncf.edu/life-at-new/health-wellness-services/counseling-services/",
-  );
+  for (const label of navigationLabels) {
+    await page.locator("nav button", { hasText: label }).first().click();
+    for (const href of deadLinks) {
+      await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
+    }
+  }
 });
 
 test("home and Rooty have no serious accessibility violations", async ({ page }) => {

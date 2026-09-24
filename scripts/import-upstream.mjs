@@ -15,8 +15,10 @@ import { execFile as execFileCallback } from "node:child_process";
 
 const execFile = promisify(execFileCallback);
 const repository =
-  "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboard";
-const commit = "68b6fc6b0992f35ed16add1b526dd218d3e43fa4";
+  "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboardv3-04252026";
+const commit = "36f923350916a30b7abce91cbe32395e9d3e601f";
+// Manu publishes this build to GitHub Pages under a project subpath.
+const upstreamBasePath = "/ncf-senior-thesis-dashboardv3-04252026/";
 const importedRoots = ["assets", "handouts", "images", "index.html", "vite.svg"];
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,6 +47,10 @@ try {
       preserveTimestamps: true,
     });
   }
+
+  const indexPath = join(projectRoot, "index.html");
+  const indexHtml = await readFile(indexPath, "utf8");
+  await writeFile(indexPath, indexHtml.replaceAll(upstreamBasePath, "./"), "utf8");
 
   const importedPaths = [];
   for (const root of importedRoots) {

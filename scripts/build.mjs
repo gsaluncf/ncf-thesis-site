@@ -66,14 +66,20 @@ const cannedMarker = '"Open Rooty chat"';
 const markerIndex = entryBundle.indexOf(cannedMarker);
 if (markerIndex < 0) throw new Error("Could not find Manu's canned Rooty component.");
 const componentPrefix = entryBundle.slice(0, markerIndex);
-const functionMatches = [...componentPrefix.matchAll(/function ([A-Za-z_$][\w$]*)\(\)\{/g)];
+const functionMatches = [
+  ...componentPrefix.matchAll(/function ([A-Za-z_$][\w$]*)\([^)]*\)\{/g),
+];
 const componentName = functionMatches.at(-1)?.[1];
 if (!componentName) throw new Error("Could not identify Manu's canned Rooty component name.");
-const invocation = `,i.jsx(${componentName},{})`;
-if (entryBundle.split(invocation).length !== 2) {
+// The minifier renames the JSX runtime and v3 passes props (setActiveTab) to the widget.
+const escapedName = componentName.replaceAll("$", "\\$");
+const invocations = [
+  ...entryBundle.matchAll(new RegExp(`,[A-Za-z_$][\\w$]*\\.jsx\\(${escapedName},\\{[^{}]*\\}\\)`, "g")),
+];
+if (invocations.length !== 1) {
   throw new Error("Manu's canned Rooty invocation was missing or ambiguous.");
 }
-entryBundle = entryBundle.replace(invocation, "");
+entryBundle = entryBundle.replace(invocations[0][0], "");
 await writeFile(outputEntryPath, entryBundle, "utf8");
 const bootstrap = `import { PROGRESS_KEY, installProgressSync, loadProgress } from "./progress-client.js";
 
@@ -141,7 +147,7 @@ await writeFile(join(outputRoot, "404.html"), notFoundHtml, "utf8");
 
 const headers = `/*
   Cache-Control: no-store
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://player.vimeo.com; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://player.vimeo.com; img-src 'self' data: https://images.pexels.com https://covers.openlibrary.org; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
   Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=(), usb=()
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff

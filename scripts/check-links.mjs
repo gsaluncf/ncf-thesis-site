@@ -7,15 +7,16 @@ const target = process.env.CHECK_URL || `http://127.0.0.1:${localPort}`;
 const targetOrigin = new URL(target).origin;
 const navigationLabels = [
   "Home",
-  "Timeline",
+  "Sponsor & Committee",
   "Resources & Tools",
-  "Templates",
   "Formatting & Citations",
-  "Research Tools",
   "Writing Support",
-  "Your Advisor",
   "My Progress",
+  "Bacc Defense",
 ];
+// Manu's v3 hides most links inside collapsible sections and audience toggles.
+const accordionSelector = "main section[id] > button[aria-expanded]";
+const audienceToggles = ["For Students", "For Sponsors & Committee Members"];
 
 let preview;
 if (!process.env.CHECK_URL) {
@@ -36,13 +37,35 @@ const discovered = new Set();
 try {
   await page.goto(target, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("nav button");
-  for (const label of navigationLabels) {
-    await page.locator("nav button", { hasText: label }).first().click();
-    await page.waitForTimeout(30);
+  async function collectLinks() {
     const links = await page.locator("a[href]").evaluateAll((anchors) =>
       anchors.map((anchor) => anchor.href),
     );
     for (const link of links) discovered.add(link);
+  }
+
+  async function expandSections() {
+    for (let index = 0; index < (await page.locator(accordionSelector).count()); index += 1) {
+      const button = page.locator(accordionSelector).nth(index);
+      if ((await button.getAttribute("aria-expanded")) === "false") await button.click();
+      await page.waitForTimeout(30);
+      await collectLinks();
+    }
+  }
+
+  for (const label of navigationLabels) {
+    await page.locator("nav button", { hasText: label }).first().click();
+    await page.waitForTimeout(30);
+    await collectLinks();
+    await expandSections();
+    for (const audience of audienceToggles) {
+      const toggle = page.locator("main button", { hasText: audience });
+      if ((await toggle.count()) === 0) continue;
+      await toggle.first().click();
+      await page.waitForTimeout(30);
+      await collectLinks();
+      await expandSections();
+    }
   }
   await page.goto(new URL("/missing-link-audit-page", target).href);
   for (const link of await page.locator("a[href]").evaluateAll((anchors) =>

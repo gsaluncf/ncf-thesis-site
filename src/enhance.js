@@ -15,6 +15,10 @@ const knownLinkRepairs = new Map([
     "https://www.ncf.edu/student-life/counseling-and-wellness-center/",
     "https://www.ncf.edu/life-at-new/health-wellness-services/counseling-services/",
   ],
+  [
+    "https://www.ncf.edu/academics/isps/",
+    "https://catalog.ncf.edu/undergraduate/academic-contract-isp/",
+  ],
 ]);
 
 const contentReplacements = new Map([

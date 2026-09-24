@@ -2,8 +2,8 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const EXPECTED_REPOSITORY =
-  "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboard";
-const EXPECTED_COMMIT = "68b6fc6b0992f35ed16add1b526dd218d3e43fa4";
+  "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboardv3-04252026";
+const EXPECTED_COMMIT = "36f923350916a30b7abce91cbe32395e9d3e601f";
 
 describe("the imported upstream snapshot", () => {
   it("records the authoritative repository and exact commit", async () => {

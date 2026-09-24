@@ -1,16 +1,18 @@
 {
-  "repository": "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboard",
-  "commit": "68b6fc6b0992f35ed16add1b526dd218d3e43fa4",
-  "importedAt": "2026-08-31T17:27:18.628Z",
+  "repository": "https://github.com/mlopezzafra-ncf/ncf-senior-thesis-dashboardv3-04252026",
+  "commit": "36f923350916a30b7abce91cbe32395e9d3e601f",
+  "importedAt": "2026-09-17T17:14:29.234Z",
   "importedPaths": [
-    "assets/index-CXSl9HMH.css",
-    "assets/index-EREuTEJm.js",
+    "assets/index-BlmNIDSn.css",
+    "assets/index-Dp7rgt1h.js",
+    "handouts/BACC Defense Students Guide.pdf",
     "handouts/My-Research-Plan.docx",
     "handouts/Planning-My-Plan.docx",
     "handouts/Proposal-Worksheet (1).docx",
     "handouts/Proposal-Worksheet.docx",
     "handouts/Research-Question-Templates.docx",
     "handouts/Senior Thesis Sample Title Page and Abstract.docx",
+    "handouts/Thesis Template.dotx",
     "handouts/Thesis-of-My-Thesis.docx",
     "handouts/Transforming-Weak-Verbs-to-Strong.docx",
     "images/hero-bg.jpg",
@@ -31,12 +33,16 @@
   ],
   "files": [
     {
-      "path": "assets/index-CXSl9HMH.css",
-      "sha256": "0c4593ed9f585dd63373cf7f64c620a6768da22f951128e5a0d003b2c3fce21f"
+      "path": "assets/index-BlmNIDSn.css",
+      "sha256": "bd39a84af608b8200dbd645abb2df6350699ccc6fd5093c166d43f10a72934c0"
     },
     {
-      "path": "assets/index-EREuTEJm.js",
-      "sha256": "eb51830ef76ae5d2473511681e55e115bb8eee335e00320ee8cd672c7293f11c"
+      "path": "assets/index-Dp7rgt1h.js",
+      "sha256": "9589017c77f042ef2310c3ea0c55fec6f1a1971964fe3fa7d150a93422af3973"
+    },
+    {
+      "path": "handouts/BACC Defense Students Guide.pdf",
+      "sha256": "6e29c1d5fa15880762df7a0ffbf102412acb100bc014da215d6c1b8618450622"
     },
     {
       "path": "handouts/My-Research-Plan.docx",
@@ -61,6 +67,10 @@
     {
       "path": "handouts/Senior Thesis Sample Title Page and Abstract.docx",
       "sha256": "d2805fe81b10346de427cbb6ace11d7041f51d9dd02578be78479b2be7584afe"
+    },
+    {
+      "path": "handouts/Thesis Template.dotx",
+      "sha256": "b7038de1f448f64c52d6a7935d1cf4d811d2f404822fa2d750b96902fd0bf18e"
     },
     {
       "path": "handouts/Thesis-of-My-Thesis.docx",
@@ -124,7 +134,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "013b6e1a9967f19822072e6aac071c89b635f2a66cdd1637248a9c77b54336ba"
+      "sha256": "b4596cf50d0a7cf00b8f7784b43580f9b62b398ba8f090ca60e46da17cf2f1c3"
     },
     {
       "path": "vite.svg",

@@ -148,6 +148,77 @@ html[data-thesis-view="interior"] header .thesis-hero-feature {
   color: #8a1c13;
 }
 
+/* WCAG AA contrast for components added in Manu's v3 dashboard. */
+#root main .text-gray-500 {
+  color: #4b5563;
+}
+
+#root main .text-gray-400 {
+  color: #5f6673;
+}
+
+#root main .text-navy\/50 {
+  color: rgb(32 41 68 / 72%);
+}
+
+#root main p > a.text-accent,
+#root main li > a.text-accent {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+#root main .text-red-500,
+#root main .text-red-600 {
+  color: #b91c1c;
+}
+
+#root main .text-emerald-600 {
+  color: #047857;
+}
+
+#root main .text-amber-600 {
+  color: #b45309;
+}
+
+#root main .text-emerald-100 {
+  color: #d1fae5;
+  opacity: 1;
+}
+
+#root main .bg-amber-600 {
+  background-color: #b45309;
+}
+
+#root main .bg-amber-600:hover {
+  background-color: #92400e;
+}
+
+#root main .bg-emerald-600 {
+  background-color: #047857;
+}
+
+#root main .bg-emerald-600:hover {
+  background-color: #065f46;
+}
+
+#root main span.rounded-full.text-white[style*="background-color"] {
+  color: var(--thesis-navy);
+}
+
+#root main span.rounded-full.text-white[style*="rgb(239, 68, 68)"] {
+  background-color: #b91c1c !important;
+  color: #fff;
+}
+
+#root main span.rounded-full.text-white[style*="rgb(168, 85, 247)"] {
+  background-color: #7e22ce !important;
+  color: #fff;
+}
+
+#root main p[style*="opacity: 0.85"] {
+  opacity: 1 !important;
+}
+
 @media (max-width: 42rem) {
   .thesis-hero-feature {
     grid-template-columns: auto 1fr;
