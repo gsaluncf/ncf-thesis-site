@@ -148,6 +148,20 @@ html[data-thesis-view="interior"] header .thesis-hero-feature {
   color: #8a1c13;
 }
 
+.thesis-video-frame {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+}
+
+.thesis-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 /* WCAG AA contrast for components added in Manu's v3 dashboard. */
 #root main .text-gray-500 {
   color: #4b5563;

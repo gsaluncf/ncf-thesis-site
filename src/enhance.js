@@ -272,6 +272,53 @@ function decorateCampusCards(scope) {
   }
 }
 
+// The upstream build links six thesis recordings that were never published with
+// it, so every one of those players loads an empty file. The introduction keeps
+// a working video and the remaining empty players are dropped until the
+// recordings ship.
+const featuredVideo = {
+  section: "section-what-is",
+  src: "https://player.vimeo.com/video/1014845426?h=&badge=0&autopause=0&player_id=0",
+  title: "Prof. Heidi Harley on the Senior Thesis Process",
+  summary: "A faculty perspective on what makes a great thesis and how to approach the journey.",
+};
+
+function featureVideo(scope, video, card) {
+  const frame = scope.createElement("div");
+  frame.className = "thesis-video-frame";
+  const player = scope.createElement("iframe");
+  player.src = featuredVideo.src;
+  player.title = featuredVideo.title;
+  player.loading = "lazy";
+  player.allow = "autoplay; fullscreen; picture-in-picture";
+  player.allowFullscreen = true;
+  frame.append(player);
+  video.replaceWith(frame);
+  const heading = card.querySelector("h3, h4");
+  if (heading) heading.textContent = featuredVideo.title;
+  const summary = heading?.parentElement?.querySelector("p");
+  if (summary) summary.textContent = featuredVideo.summary;
+}
+
+// Every card in this collapsed section points at one of the missing files, so
+// it is dropped before a student can open it. Restore it with the recordings.
+const missingVideoSection = "section-videos";
+
+function replaceMissingVideos(scope) {
+  scope.querySelector(`#${missingVideoSection}`)?.remove();
+  for (const video of scope.querySelectorAll("video")) {
+    const source = video.querySelector("source")?.getAttribute("src") || "";
+    if (!source.includes("/videos/")) continue;
+    const section = video.closest("section[id]");
+    const card = video.closest("div.rounded-xl");
+    if (section?.id === featuredVideo.section && card) {
+      featureVideo(scope, video, card);
+      continue;
+    }
+    (card || video).remove();
+  }
+}
+
 function activeView(scope) {
   const active = scope.querySelector('nav button[aria-current="page"]');
   return active?.textContent.trim() === "Home" ? "home" : "interior";
@@ -449,6 +496,7 @@ export function enhanceDashboard(scope = document) {
   mountAssistant(scope);
   addHeroFeature(scope);
   repairLinks(scope);
+  replaceMissingVideos(scope);
   replaceEmojiAndDashes(scope);
   replaceStructuredCopy(scope);
   decorateCampusCards(scope);

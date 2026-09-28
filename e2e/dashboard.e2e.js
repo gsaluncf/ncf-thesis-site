@@ -69,10 +69,30 @@ test("faculty videos use the intended media", async ({ page }) => {
   await page.goto("/");
   await page.locator("#section-faculty-videos > button").click();
 
-  const videos = page.locator('iframe[src^="https://player.vimeo.com/video/"]');
+  const videos = page.locator(
+    '#section-faculty-videos iframe[src^="https://player.vimeo.com/video/"]',
+  );
   await expect(videos).toHaveCount(2);
   await expect(videos.nth(0)).toHaveAttribute("title", /Heidi Harley/);
   await expect(videos.nth(1)).toHaveAttribute("title", /Rory Renzy/);
+});
+
+test("no view offers a player for the unpublished recordings", async ({ page }) => {
+  await page.goto("/");
+  const featured = page.locator("#section-what-is .thesis-video-frame iframe");
+  await expect(featured).toHaveAttribute("src", /player\.vimeo\.com/);
+  await expect(featured).toHaveAttribute("title", /Heidi Harley/);
+
+  // Only these views shipped a player for a recording that was never published.
+  for (const label of ["Home", "Writing Support", "Bacc Defense", "My Progress"]) {
+    await page.locator("nav button", { hasText: label }).first().click();
+    const sections = page.locator("main section[id] > button[aria-expanded='false']");
+    for (let index = await sections.count(); index > 0; index -= 1) {
+      await sections.first().click();
+    }
+    await expect(page.locator("main video")).toHaveCount(0);
+    await expect(page.locator("#section-videos")).toHaveCount(0);
+  }
 });
 
 test("home keeps Manu's four quick links", async ({ page }) => {
